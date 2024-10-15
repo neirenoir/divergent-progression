@@ -46,14 +46,6 @@ public abstract class AnvilScreenHandlerMixin extends ForgingScreenHandler {
         }
     }
 
-    @ModifyConstant(
-            method = "method_24922",
-            constant = @Constant(floatValue = 0.12f)
-    )
-    private static float reduceBreakChance(float constant) {
-        return 0.1f;
-    }
-
     @Inject(
             method = "updateResult",
             at = @At(value = "HEAD")

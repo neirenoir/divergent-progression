@@ -2,6 +2,7 @@ package io.bluestaggo.divergeprog.item;
 
 import com.google.common.base.Suppliers;
 import io.bluestaggo.divergeprog.block.ModBlockTags;
+import net.fabricmc.yarn.constants.MiningLevels;
 import net.minecraft.block.Block;
 import net.minecraft.item.Items;
 import net.minecraft.item.ToolMaterial;
@@ -13,21 +14,21 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public enum ModToolMaterials implements ToolMaterial {
-    FLINT(ModBlockTags.INCORRECT_FOR_FLINT_TOOL, 96, 2.0F, 0.0F, 15,
+    FLINT(MiningLevels.WOOD, 96, 2.0F, 0.0F, 15,
             () -> Ingredient.ofItems(Items.FLINT)),
-    COPPER(BlockTags.INCORRECT_FOR_STONE_TOOL, 192, 4.0F, 1.0F, 5,
+    COPPER(MiningLevels.STONE, 192, 4.0F, 1.0F, 5,
             () -> Ingredient.ofItems(Items.COPPER_INGOT)),
     ;
 
-    private final TagKey<Block> inverseTag;
+    private final int miningLevel;
     private final int itemDurability;
     private final float miningSpeed;
     private final float attackDamage;
     private final int enchantability;
     private final Supplier<Ingredient> repairIngredient;
 
-    ModToolMaterials(final TagKey<Block> inverseTag, final int itemDurability, final float miningSpeed, final float attackDamage, final int enchantability, final Supplier<Ingredient> repairIngredient) {
-        this.inverseTag = inverseTag;
+    ModToolMaterials(final int miningLevel, final int itemDurability, final float miningSpeed, final float attackDamage, final int enchantability, final Supplier<Ingredient> repairIngredient) {
+        this.miningLevel = miningLevel;
         this.itemDurability = itemDurability;
         this.miningSpeed = miningSpeed;
         this.attackDamage = attackDamage;
@@ -48,8 +49,9 @@ public enum ModToolMaterials implements ToolMaterial {
         return this.attackDamage;
     }
 
-    public TagKey<Block> getInverseTag() {
-        return this.inverseTag;
+    @Override
+    public int getMiningLevel() {
+        return this.miningLevel;
     }
 
     public int getEnchantability() {

@@ -4,15 +4,14 @@ import com.llamalad7.mixinextras.sugar.Local;
 import io.bluestaggo.divergeprog.DivergentProgression;
 import net.fabricmc.fabric.api.item.v1.FabricItemStack;
 import net.minecraft.block.BlockState;
-import net.minecraft.component.ComponentHolder;
-import net.minecraft.component.ComponentMap;
+import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
-import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -34,7 +33,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @Mixin(ItemStack.class)
-public abstract class ItemStackMixin implements ComponentHolder, FabricItemStack {
+public abstract class ItemStackMixin implements FabricItemStack {
     @Unique private static final Text BROKEN_TEXT = Text.translatable(Util.createTranslationKey(
             "item", DivergentProgression.id("tooltip.broken"))).formatted(Formatting.RED);
 
@@ -43,7 +42,7 @@ public abstract class ItemStackMixin implements ComponentHolder, FabricItemStack
     @Shadow public abstract int getMaxDamage();
     @Shadow public abstract Item getItem();
     @Shadow public abstract void decrement(int amount);
-    @Shadow public abstract ComponentMap getComponents();
+    @Shadow public abstract NbtCompound getNbt();
 
     @Unique
     private boolean isBroken() {
@@ -51,7 +50,7 @@ public abstract class ItemStackMixin implements ComponentHolder, FabricItemStack
     }
 
     @Inject(
-            method = "damage(ILnet/minecraft/server/world/ServerWorld;Lnet/minecraft/server/network/ServerPlayerEntity;Ljava/util/function/Consumer;)V",
+            method = "damage(ILnet/minecraft/entity/LivingEntity;Ljava/util/function/Consumer;)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/item/ItemStack;decrement(I)V",
@@ -59,16 +58,18 @@ public abstract class ItemStackMixin implements ComponentHolder, FabricItemStack
             ),
             cancellable = true
     )
-    private void damageRestrictDecrement(int amount, ServerWorld world, @Nullable ServerPlayerEntity player,
-                                         Consumer<Item> breakCallback, CallbackInfo ci, @Local(ordinal = 1) int i) {
+    private void damageRestrictDecrement(
+        int amount,
+        LivingEntity entity,
+        Consumer<Item> breakCallback,
+        CallbackInfo ci
+    ) {
         Item item = getItem();
         boolean noDestroy = item instanceof ToolItem || item instanceof ArmorItem || item instanceof ShieldItem;
         if (!noDestroy) {
             decrement(amount);
         }
-        if (!noDestroy || i - amount < this.getMaxDamage()) {
-            breakCallback.accept(item);
-        }
+
         ci.cancel();
     }
 
@@ -76,15 +77,14 @@ public abstract class ItemStackMixin implements ComponentHolder, FabricItemStack
             method = "getTooltip",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/item/Item;appendTooltip(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/Item$TooltipContext;Ljava/util/List;Lnet/minecraft/item/tooltip/TooltipType;)V",
+                    target = "Lnet/minecraft/item/Item;appendTooltip(Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;Ljava/util/List;Lnet/minecraft/client/item/TooltipContext;)V",
                     ordinal = 0,
                     shift = At.Shift.BEFORE
             )
     )
-    private void getBrokenTooltip(Item.TooltipContext context, @Nullable PlayerEntity player, TooltipType type,
-                                  CallbackInfoReturnable<List<Text>> cir, @Local Consumer<Text> tooltip) {
+    private void getBrokenTooltip(PlayerEntity player, TooltipContext context, CallbackInfoReturnable<List<Text>> cir, @Local List<Text> list) {
         if (isBroken()) {
-            tooltip.accept(BROKEN_TEXT);
+            list.add(BROKEN_TEXT);
         }
     }
 
@@ -132,19 +132,9 @@ public abstract class ItemStackMixin implements ComponentHolder, FabricItemStack
         }
     }
 
-    @Inject(
-            method = "postHit",
-            at = @At("HEAD"),
-            cancellable = true
-    )
-    private void postHitIfNotBroken(LivingEntity target, PlayerEntity player, CallbackInfoReturnable<Boolean> cir) {
-        if (isBroken()) {
-            cir.setReturnValue(false);
-        }
-    }
 
     @Inject(
-            method = "postDamageEntity",
+            method = "postHit",
             at = @At("HEAD"),
             cancellable = true
     )
@@ -198,8 +188,9 @@ public abstract class ItemStackMixin implements ComponentHolder, FabricItemStack
         }
     }
 
+/*
     @Inject(
-            method = "applyAttributeModifiers",
+            method = "attri",
             at = @At("HEAD"),
             cancellable = true
     )
@@ -208,7 +199,7 @@ public abstract class ItemStackMixin implements ComponentHolder, FabricItemStack
             ci.cancel();
         }
     }
-
+*/
     @Inject(
             method = "isEnchantable",
             at = @At("HEAD"),

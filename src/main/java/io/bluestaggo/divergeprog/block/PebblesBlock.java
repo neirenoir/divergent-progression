@@ -20,12 +20,12 @@ public class PebblesBlock extends Block {
     }
 
     @Override
-    protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+    public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
         return PEBBLE_SHAPE;
     }
 
     @Override
-    protected BlockState getStateForNeighborUpdate(
+    public BlockState getStateForNeighborUpdate(
             BlockState state, Direction direction, BlockState neighborState, WorldAccess world,
             BlockPos pos, BlockPos neighborPos) {
         return direction == Direction.DOWN && !this.canPlaceAt(state, world, pos)
@@ -34,7 +34,7 @@ public class PebblesBlock extends Block {
     }
 
     @Override
-    protected boolean canPlaceAt(BlockState state, WorldView world, BlockPos pos) {
+    public boolean canPlaceAt(BlockState state, WorldView world, BlockPos pos) {
         return sideCoversSmallSquare(world, pos.down(), Direction.UP);
     }
 }
